@@ -1,0 +1,29 @@
+https://kkangsnote.tistory.com/71?category=792064
+
+- 1
+
+    var str1 = "Hello"
+    var str2 = "World"
+    var str3 = "Hello"
+
+1.   println("str1 === str2 ${str1 === str2}" )
+2.   println("str1 === str3 ${str1 === str3}" )
+
+2.가 true가 나오는데, 그이유는 String은 String pool이라는 같은공간내에
+변수가 다른 형태로 저장되기 때문.. 그리고 ===는 값이 아닌 참조주소를 참고하기 때문에
+true가 나옴
+
+- 2
+    //?을 넣음으로써(데이터타입? 형태로 만듦) null허용변수로 바꿀수있음.. 빼면 초기화 안되었다고 컴파일에러 발생
+    var str: String? = null
+
+//  str?를 붙임으로써 str이 만일 null이면 뒤에 .length부분을 실행시키지 않겠다임
+// 만약 str!! 이면 str이 null이여도 실행시키겟다인데.. 위험하다.. 말그대로 str이 null이면 NPE발생
+    println("str: $str, length: ${str?.length}")
+
+
+cf. if(str!= null) str.length else -1 이고, 이와같은 형태를 elvis형태로 바꿀수있따.
+    = str?.length ?: -1 와 같은형태.. 즉. str.length가 null이 아니면 length가 나오고 null이면 -1이 나온다. 
+
+
+
