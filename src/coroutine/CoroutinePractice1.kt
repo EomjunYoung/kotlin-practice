@@ -59,7 +59,7 @@ runBlocking { delay(2000L) }
      *
      * runBlocking{}과 달리 coroutineScope{}는 자식들의 종료를 기다리는 동안 현재 스레드를 블록하지 않는다.
      *
-     */
+
     launch{
 //        delay(10L)
         println("Task from runBlocking")
@@ -75,5 +75,22 @@ runBlocking { delay(2000L) }
     }
 
     println("Coroutine scope is over")
+
+     */
+
+
+    val job = launch(Dispatchers.Default){
+        for ( i in 1..10 ){
+            println("I'm sleeping $i ...")
+            Thread.sleep(5000L)
+        }
+    }
+
+    delay(1300L)
+    println("main : I'm tired of waiting!")
+    job.cancelAndJoin()
+    println("main : Now I can quit")
+
+
 
 }
