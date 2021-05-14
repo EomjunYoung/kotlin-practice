@@ -1,6 +1,9 @@
 package coroutine
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.Default
+import org.graalvm.compiler.lir.asm.CompilationResultBuilderFactory.Default
+import sun.rmi.server.Dispatcher
 
 fun main(args: Array<String>) = runBlocking{
 
@@ -79,7 +82,7 @@ runBlocking { delay(2000L) }
      */
 
 
-    /* ---a
+    /* ---a1
     val job = launch(Dispatchers.Default){
         for ( i in 1..10 ){
             yield()
@@ -92,7 +95,29 @@ runBlocking { delay(2000L) }
     println("main : I'm tired of waiting!")
     job.cancelAndJoin()
     println("main : Now I can quit")
+
 */
+
+
+
+    /* ---a2 (a1과 비교해서 볼것)
+    val job = launch(Dispatcher.Default) {
+
+        for(i in 1..10){
+            if(!isActive){
+                break
+            }
+            println("I'm sleeping $i ...")
+            Thread.sleep(500L)
+        }
+
+        delay(1300L)
+        println("main: I'm tired of waiting!")
+        job.cancelAndJoing()
+        println("main: Now I can quit")
+    }
+     */
+
 
 
 }
