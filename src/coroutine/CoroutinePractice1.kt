@@ -1,9 +1,8 @@
 package coroutine
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.Default
-import org.graalvm.compiler.lir.asm.CompilationResultBuilderFactory.Default
-import sun.rmi.server.Dispatcher
+import java.io.Closeable
+
 
 fun main(args: Array<String>) = runBlocking{
 
@@ -82,12 +81,14 @@ runBlocking { delay(2000L) }
      */
 
 
-    /* ---a1
+
+
+/** a1
     val job = launch(Dispatchers.Default){
         for ( i in 1..10 ){
-            yield()
+            yield()//코루틴의 취소요청이 있는지 확인하는 코드 (job.cancel~ 을 통해 취소요청을 받은거임)
             println("I'm sleeping $i ...")
-            Thread.sleep(5000L)
+            Thread.sleep(500L)
         }
     }
 
@@ -95,29 +96,74 @@ runBlocking { delay(2000L) }
     println("main : I'm tired of waiting!")
     job.cancelAndJoin()
     println("main : Now I can quit")
-
-*/
-
+**/
 
 
-    /* ---a2 (a1과 비교해서 볼것)
-    val job = launch(Dispatcher.Default) {
+    /** a2
+    val job = launch(Dispatchers.Default) {
 
-        for(i in 1..10){
-            if(!isActive){
+        for (i in 1..10) {
+            if (!isActive) { //coroutineScope에 정의된 isActive 속성을 통해 코루틴이 비활성 상태인 경우 작업종료
                 break
             }
             println("I'm sleeping $i ...")
             Thread.sleep(500L)
         }
 
+    }
         delay(1300L)
         println("main: I'm tired of waiting!")
-        job.cancelAndJoing()
+        job.cancelAndJoin() // 유추상.. 이 job.cancel~ 로인해 job 부분의 코루틴이 작동을 멈추게되어서 !isActive된듯
         println("main: Now I can quit")
+**/
+
+    /** a3 (a1, a2와 결과가 같음)
+    val job = launch{
+        try{
+            repeat(1000){
+                i -> println("I'm sleeping $i ...")
+                delay(500L)
+            }
+        } catch(e: Exception){
+            println(e.printStackTrace())
+        }
+        finally{
+            println("main : I'm running finally!")
+        }
+
     }
-     --*/
+
+    delay(1300L)
+    println("main: I'm tired of waiting!")
+    job.cancelAndJoin()
+    println("main : Now I can quit.")
+    **/
 
 
+    val job = launch{
+        SleepingBed().use{
 
+            it.sleep(1000)
+        }
+    }
+
+    delay(1300L)
+    println("main : I'm tired of waiting!")
+    job.cancelAndJoin()
+    println("main: Now I can quit.")
+
+
+}
+
+class SleepingBed : Closeable {
+    suspend fun sleep(times: Int){
+        repeat(times){
+            i -> println("I'm sleeping $i ...")
+            delay(500)
+        }
+    }
+
+    override fun close(){
+        println("main : I'm running close() SleepingBed!")
+    }
 }
