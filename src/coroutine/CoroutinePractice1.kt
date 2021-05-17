@@ -1,10 +1,11 @@
 package coroutine
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import java.io.Closeable
 
 
-fun main(args: Array<String>) = runBlocking{
+fun main(args: Array<String>) = runBlocking<Unit>{
 
 /**
  *
@@ -140,6 +141,7 @@ runBlocking { delay(2000L) }
     **/
 
 
+    /** a4
     val job = launch{
         SleepingBed().use{
 
@@ -155,6 +157,8 @@ runBlocking { delay(2000L) }
 
 }
 
+//suspend 함수는 코루틴 처리블록인 launch나 async에서 호출될 수 있고,
+//또 다른 suspend 함수에서 호출될 수 있다.
 class SleepingBed : Closeable {
     suspend fun sleep(times: Int){
         repeat(times){
@@ -166,4 +170,102 @@ class SleepingBed : Closeable {
     override fun close(){
         println("main : I'm running close() SleepingBed!")
     }
+
+    **/
+
+    /** a5
+    val job = launch{
+        try{
+            repeat(1000){ i ->
+                println("I'm sleeping $i ... ")
+                delay(500L)
+            }
+        } finally {
+            println("main: I'm running finally")
+        }
+    }
+
+    launch{
+        delay(1300L)
+        println("main: I'm tired of waiting. Cancel the job!")
+        if(job.isActive){
+            job.cancelAndJoin()
+        }
+    }
+    **/
+
+    /** a6 기본적으로 a5와 같은방향의 코드다.
+     * 다만 a5는 job객체 참조를 유지하면서 별도의 코루틴에서 처리하고 있는 번거로움이 있다.
+     * 이를 해결하기 위해 코루틴 프레임워크는 withTimeout을 통해 이러한 문제를 해결할수 있다.
+     *
+     * a6 코드를 실행하면 나오는 TimeoutCancellationException는 예제가 메인함수에서 바로 실행되었기 때문이다.
+     * 코루틴이 취소될때 발생하는 TimeoutCancellationException 예외는 코루틴에서는 일반적인 종료상황중 하나다.
+    withTimeout(1300L){
+        launch{
+            try{
+                repeat(1000){
+                    i -> println("I'm sleeping $i ...")
+                    delay(500L)
+                }
+            } finally {
+                println("main: I'm running finally!")
+            }
+        }
+    }
+    **/
+
+
+    /** a7
+    val channel = Channel<Int>()
+    launch{
+        for(x in 1..5) channel.send(x * x)
+        channel.close() // 채널을 닫는요청을 큐의 마지막에 넣음으로써 모든 데이터가 잘 전달될것임을 보장한다.
+    }
+
+    repeat(5) { println(channel.receive()) }
+    println("Done!")
+    **/
+
+
+    /** a8(채널 프로듀스) 코루틴이 어떤 데이터스트림(연속된 값들의 흐름)을 생성해내는 일은 꽤나 흔한일인데, 코루틴에서는
+     * 이러한 생성작업을 용이하게 하기 위해서 produce{}라는 코루틴 빌더와 이렇게 생성된 값을 수신하기 위한
+     * consumeEach()라는 확장함수를 제공한다. (for대체)
+    val squares = produceSquares(5)
+    squares.consumeEach{println(it)} // consumeEach
+    println("Done")
+
+    fun CoroutineScope.produceSquares(max: Int): ReceiveChannel<Int> = produce {
+    for(x in 1..max){
+    send(x*x)
+    }
+}   **/
+
+    /** a9 파이프라인이란 하나의 코루틴이 데이터 스트림(무한 스트림 포함)을 생산해내고 다른 하나 이상의 코루틴들이 이 스트림을
+     * 수신받아 필요한 작업을 수행한 후 가공된 결과를 다시 전달하는 패턴을 말한다.
+
+    val numbers = produceNumbers(5)
+    val doubleNumbers = produceDouble(numbers)
+    doubleNumbers.consumeEach { println(it) }
+    println("Done")
+
+    fun CoroutineScope.produceNumbers(max: Int): ReceiveChannel<Int> = produce{
+        for(x in 1..max){
+            send(x)
+        }
+    }
+
+    fun CoroutineScope.produceDouble(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = produce{
+        numbers.consumeEach { send(it*it) }
+    }
+
+    **/
+
+
+
 }
+
+
+
+
+
+
