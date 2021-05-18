@@ -241,7 +241,7 @@ class SleepingBed : Closeable {
 }   **/
 
     /** a9 파이프라인이란 하나의 코루틴이 데이터 스트림(무한 스트림 포함)을 생산해내고 다른 하나 이상의 코루틴들이 이 스트림을
-     * 수신받아 필요한 작업을 수행한 후 가공된 결과를 다시 전달하는 패턴을 말한다.
+     * 수신받아 필요한 작업을 수행한 후 가공된 결과를 다시 전달하는 패턴을 말한다.--
 
     val numbers = produceNumbers(5)
     val doubleNumbers = produceDouble(numbers)
