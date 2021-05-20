@@ -230,6 +230,10 @@ class SleepingBed : Closeable {
     /** a8(채널 프로듀스) 코루틴이 어떤 데이터스트림(연속된 값들의 흐름)을 생성해내는 일은 꽤나 흔한일인데, 코루틴에서는
      * 이러한 생성작업을 용이하게 하기 위해서 produce{}라는 코루틴 빌더와 이렇게 생성된 값을 수신하기 위한
      * consumeEach()라는 확장함수를 제공한다. (for대체)
+     *
+     * cf. Channel 객체를 만들던가, 함수의 리턴타입을 ReceiveChannel로 하여 변수객체를 하나 만들면,
+     * consumeEach 등을 통해 it으로 채널로 보내진 값(send로)을 출력할 수 있다.
+     *
     val squares = produceSquares(5)
     squares.consumeEach{println(it)} // consumeEach
     println("Done")
@@ -245,23 +249,30 @@ class SleepingBed : Closeable {
      a9 파이프라인이란 하나의 코루틴이 데이터 스트림(무한 스트림 포함)을 생산해내고 다른 하나 이상의 코루틴들이 이 스트림을
       수신받아 필요한 작업을 수행한 후 가공된 결과를 다시 전달하는 패턴을 말한다.--
 
+      *
+      * 아래 예를들면 ReceiveChannel 타입을 리턴하는 produceNumbers는 produce를 통해 일련의 정수를 생성함
+      * 그리고, 이 생성된 일련의 정수가 저장된 Channel타입인 numbers를 produceDouble이라는 또하나의 코루틴에
+      * 매개변수로 전달됨으로써 파이프라인이 형성된 것.
+      *
+
     val numbers = produceNumbers(5)
     val doubleNumbers = produceDouble(numbers)
     doubleNumbers.consumeEach { println(it) }
     println("Done")
 
-    fun CoroutineScope.produceNumbers(max: Int): ReceiveChannel<Int> = produce{
-        for(x in 1..max){
-            send(x)
-        }
-    }
 
-    fun CoroutineScope.produceDouble(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = produce{
-        numbers.consumeEach { send(it*it) }
-    }
-**/
+     fun CoroutineScope.produceNumbers(max: Int): ReceiveChannel<Int> = produce{
+     for(x in 1..max){
+     send(x)
+     }
+     }
 
-    /** a10 소수**/
+     fun CoroutineScope.produceDouble(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = produce{
+     numbers.consumeEach { send(it*it) }
+     }
+     **/
+
+    /** a10 소수
     var cur = numbersFrom(2)
     for(i in 1..10){
         val prime = cur.receive()
@@ -271,19 +282,46 @@ class SleepingBed : Closeable {
     coroutineContext.cancelChildren()
     println("Done")
 
-}
-
-
-fun CoroutineScope.numbersFrom(start: Int) = produce<Int> {
-    var x = start
-    while(true) send(x++)
-}
-
-fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<Int> {
-    for(x in numbers) {
-        if(x % prime != 0) send(x)
+    fun CoroutineScope.numbersFrom(start: Int) = produce<Int> {
+        var x = start
+        while(true) send(x++)
     }
+
+    fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<Int> {
+        for(x in numbers) {
+            if(x % prime != 0) send(x)
+        }
+    }
+    **/
+
+    /** a11 fan-out 하나의 채널로부터 두개 이상의 수신 코루틴들이 데이터를 분배하여 수신받을 수 있다.
+
+    val producer = produceNumbers()
+    repeat(5){
+
+        launchProcessor(it, producer)
+
+    }
+    delay(950L)
+    producer.cancel()
+
+    fun CoroutineScope.produceNumbers() = produce<Int>{
+        var x = 1
+        while(true){
+            send(x++)
+            delay(100L)
+        }
+    }
+
+    fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch{
+        for (msg in channel){
+            println("Processor #$id receive $msg")
+        }
+    }
+    **/
 }
+
+
 
 
 
