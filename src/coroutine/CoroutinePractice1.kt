@@ -319,6 +319,33 @@ class SleepingBed : Closeable {
         }
     }
     **/
+
+    /** a12 fan-out example2 **/
+    val producer = produceNumbers()
+    repeat(5) {
+        val job = launchProcessor(it, producer)
+        if(it == 3){
+            delay(200)
+            job.cancel()
+        }
+    }
+    delay(950L)
+    producer.cancel()
+
+}
+
+fun CoroutineScope.produceNumbers() = produce<Int> {
+    var x = 1
+    while(true) {
+        send(x++)
+        delay(100L)
+    }
+}
+
+fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
+    channel.consumeEach {
+        println("Processor #$id received $it")
+    }
 }
 
 
