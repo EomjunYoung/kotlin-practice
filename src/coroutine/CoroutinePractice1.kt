@@ -320,7 +320,7 @@ class SleepingBed : Closeable {
     }
     **/
 
-    /** a12 fan-out example2 **/
+    /** a12 fan-out example2
     val producer = produceNumbers()
     repeat(5) {
         val job = launchProcessor(it, producer)
@@ -332,21 +332,40 @@ class SleepingBed : Closeable {
     delay(950L)
     producer.cancel()
 
+    fun CoroutineScope.produceNumbers() = produce<Int> {
+        var x = 1
+        while(true) {
+            send(x++)
+            delay(100L)
+        }
+    }
+
+    fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
+        channel.consumeEach {
+            println("Processor #$id received $it")
+        }
+    }
+    **/
+
+    /** a13 fan-in **/
+    val channel = Channel<String>()
+    launch{sendString(channel, "Foo", 200L)}
+    launch{ sendString(channel, "Bar", 500L)}
+    repeat(6){
+        println(channel.receive())
+    }
+    coroutineContext.cancelChildren()
+
 }
 
-fun CoroutineScope.produceNumbers() = produce<Int> {
-    var x = 1
-    while(true) {
-        send(x++)
-        delay(100L)
+suspend fun sendString(channel: SendChannel<String>, text: String, time: Long){
+    while(true){
+        delay(time)
+        channel.send(text)
     }
 }
 
-fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
-    channel.consumeEach {
-        println("Processor #$id received $it")
-    }
-}
+
 
 
 
