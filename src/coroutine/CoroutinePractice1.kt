@@ -347,7 +347,7 @@ class SleepingBed : Closeable {
     }
     **/
 
-    /** a13 fan-in **/
+    /** a13 fan-in
     val channel = Channel<String>()
     launch{sendString(channel, "Foo", 200L)}
     launch{ sendString(channel, "Bar", 500L)}
@@ -356,13 +356,31 @@ class SleepingBed : Closeable {
     }
     coroutineContext.cancelChildren()
 
-}
 
-suspend fun sendString(channel: SendChannel<String>, text: String, time: Long){
-    while(true){
-        delay(time)
-        channel.send(text)
+    suspend fun sendString(channel: SendChannel<String>, text: String, time: Long){
+        while(true){
+            delay(time)
+            channel.send(text)
+        }
     }
+
+     **/
+
+    /** a14 Buffered Channel **/
+
+    val channel = Channel<Int>(4)
+
+    val sender = launch{
+        repeat(10){
+            print("Try to send $it : ")
+            channel.send(it)
+            print("Down\n")
+        }
+    }
+
+    delay(1000L)
+    sender.cancel()
+
 }
 
 
