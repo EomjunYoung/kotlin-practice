@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import java.io.Closeable
 
+data class Ball(var hits: Int)
 
 fun main(args: Array<String>) = runBlocking<Unit>{
 
@@ -366,7 +367,7 @@ class SleepingBed : Closeable {
 
      **/
 
-    /** a14 Buffered Channel **/
+    /** a14 Buffered Channel
 
     val channel = Channel<Int>(4)
 
@@ -380,8 +381,39 @@ class SleepingBed : Closeable {
 
     delay(1000L)
     sender.cancel()
+     **/
 
+
+    /** a15 channels are fair (채널의 공정성 예제)
+     *
+     * 2개 이상의 코루틴들이 하나의 채널로 송/수신을 수행한다면 실행 순서는 그 호출순서에따라 공정하게 할당되고
+     * FIFO 방식으로 스케쥴링 됨
+     *
+     * 다시 말해, 처음 receive()를 호출한 코루틴이 데이터를 먼저 수신함
+     *
+     * TODO: 채널객체를 통해 .recevice()로 채널에 있는 데이터를 받던, consumeEach나 기타 반복문을 통해 채널로부터 데이터를 받아 출력시키면 안에 데이터가 소멸되는 듯!
+     *
+    val table = Channel<Ball>()
+
+    launch{ player("ping", table)}
+    launch{ player("pong", table)}
+
+    table.send(Ball(0))
+    delay(1000L)
+    coroutineContext.cancelChildren()
+
+
+    suspend fun player(name: String, table: Channel<Ball>){
+    for (ball in table){
+    ball.hits++
+    println("$name $ball")
+    delay(300L)
+    table.send(ball)
+    }
+    }
+    **/
 }
+
 
 
 
