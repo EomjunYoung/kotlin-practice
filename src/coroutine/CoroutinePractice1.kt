@@ -412,6 +412,24 @@ class SleepingBed : Closeable {
     }
     }
     **/
+
+    /** a16 **/
+
+    val tickerChannel = ticker(
+            delayMillis = 100,
+            initialDelayMillis = 0
+    )
+
+    var nextElement = withTimeoutOrNull(1){tickerChannel.receive()}
+    println("Initial element is available immediately")
+
+    nextElement = withTimeoutOrNull(50){ tickerChannel.receive()}
+    println("Next element is not ready in 50ms: $nextElement")
+
+    nextElement = withTimeoutOrNull(60){ tickerChannel.receive()}
+
+
+
 }
 
 
