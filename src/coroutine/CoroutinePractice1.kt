@@ -427,6 +427,10 @@ class SleepingBed : Closeable {
     println("Next element is not ready in 50ms: $nextElement")
 
     nextElement = withTimeoutOrNull(60){ tickerChannel.receive()}
+    println("Next element is not ready in 100ms: $nextElement")
+
+
+
 
 
 
