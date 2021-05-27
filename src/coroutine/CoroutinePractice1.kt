@@ -421,13 +421,24 @@ class SleepingBed : Closeable {
     )
 
     var nextElement = withTimeoutOrNull(1){tickerChannel.receive()}
-    println("Initial element is available immediately")
+    println("Initial element is available immediately: $nextElement")
 
     nextElement = withTimeoutOrNull(50){ tickerChannel.receive()}
     println("Next element is not ready in 50ms: $nextElement")
 
     nextElement = withTimeoutOrNull(60){ tickerChannel.receive()}
     println("Next element is not ready in 100ms: $nextElement")
+
+    println("Consumer pauses for 300ms")
+    delay(300)
+
+    nextElement = withTimeoutOrNull(1){ tickerChannel.receive() }
+    println("Next element is available immediately after large consumer delay: $nextElement")
+
+    nextElement = withTimeoutOrNull(60) { tickerChannel.receive() }
+    println("Next element is ready in 50ms after consumer pause in 150ms: $nextElement")
+
+    tickerChannel.cancel()
 
 
 
